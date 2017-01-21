@@ -155,10 +155,7 @@ def main():
     cmd_parser = cmd_arguments()
     args = cmd_parser.parse_args()
 
-    if args.polarion_project:
-        polarion_project = args.polarion_project
-    else:
-        polarion_project = 'RHCF3'
+    polarion_project = args.polarion_project if args.polarion_project else 'RHCF3'
 
     compare = PylarionCompare(polarion_project, args.polarion_run)
 
