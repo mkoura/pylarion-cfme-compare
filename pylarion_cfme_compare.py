@@ -159,9 +159,6 @@ def main():
         polarion_project = args.polarion_project
     else:
         polarion_project = 'RHCF3'
-    if not polarion_project:
-        print("Polarion project name is not set.", file=sys.stderr)
-        sys.exit(1)
 
     compare = PylarionCompare(polarion_project, args.polarion_run)
 
