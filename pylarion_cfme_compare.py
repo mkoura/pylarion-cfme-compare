@@ -69,7 +69,7 @@ def retry_query(fun, *args, **kwargs):
     raise PylarionCompareException("Failed to query Polarion: {}".format(detail))
 
 
-def parse_input(file_name):
+def parse_pytest(file_name):
     """Parse 'py.test --collect-only' output."""
 
     with open(file_name, 'r') if file_name != '-' else sys.stdin as infile:
@@ -96,7 +96,7 @@ def parse_input(file_name):
                 yield unique_id
 
 
-class PolarionCompare(object):
+class PylarionCompare(object):
     """Get Test Cases info from Polarion and compare it to py.test output."""
 
     def __init__(self, polarion_project, polarion_run):
@@ -136,7 +136,7 @@ class PolarionCompare(object):
         polarion_testcases = self.polarion_collect_testcases()
 
         in_polarion = set([uid for uid in polarion_testcases])
-        in_tree = set(parse_input(file_name))
+        in_tree = set(parse_pytest(file_name))
 
         not_in_pytest = []
         for uid in sorted(in_polarion - in_tree):
@@ -163,7 +163,7 @@ def main():
         print("Polarion project name is not set.", file=sys.stderr)
         sys.exit(1)
 
-    compare = PolarionCompare(polarion_project, args.polarion_run)
+    compare = PylarionCompare(polarion_project, args.polarion_run)
 
     not_in_polarion, not_in_pytest = compare(args.input)
 
