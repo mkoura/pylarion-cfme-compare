@@ -102,7 +102,6 @@ class PolarionCompare(object):
     def __init__(self, polarion_project, polarion_run):
         self.polarion_project = polarion_project
         self.polarion_run = polarion_run
-        self.cached_testcases = {}
 
     def compile_query(self, test_case_query):
         """Compile query for Test Case search."""
@@ -114,39 +113,40 @@ class PolarionCompare(object):
                 .format(test_records_str, test_case_query)
         return query
 
-    def polarion_collect_test_cases(self):
+    def polarion_collect_testcases(self):
         """Collect Polarion Test Cases."""
 
         test_cases_list = retry_query(TestCase.query,
                                       query=self.compile_query('cfme.tests.*'),
                                       project_id=self.polarion_project,
                                       fields=['title', 'work_item_id', 'test_case_id', 'assignee'])
+        cached_testcases = {}
         for test_case in test_cases_list:
             unique_id = test_case.test_case_id
             param_index = test_case.title.rfind('[')
             if param_index > 0:
                 unique_id += test_case.title[param_index:]
-            self.cached_testcases[unique_id] = test_case
+            cached_testcases[unique_id] = test_case
+        return cached_testcases
 
     def __call__(self, file_name):
         """Return list of tests that are missing in Polarion and list of tuples with test
         missing in source tree and it's Polarion assignee."""
 
-        self.polarion_collect_test_cases()
+        polarion_testcases = self.polarion_collect_testcases()
 
-        in_polarion = set([uid for uid in self.cached_testcases])
+        in_polarion = set([uid for uid in polarion_testcases])
         in_tree = set(parse_input(file_name))
 
-        not_in_pytest = sorted(in_polarion - in_tree)
-        not_in_pytest_w_assignee = []
-        for uid in not_in_pytest:
+        not_in_pytest = []
+        for uid in sorted(in_polarion - in_tree):
             try:
-                assignee = self.cached_testcases[uid].assignee[0].name
+                assignee = polarion_testcases[uid].assignee[0].name
             except IndexError:
                 assignee = None
-            not_in_pytest_w_assignee.append((uid, assignee))
+            not_in_pytest.append((uid, assignee))
 
-        return (sorted(in_tree - in_polarion), not_in_pytest_w_assignee)
+        return (sorted(in_tree - in_polarion), not_in_pytest)
 
 
 def main():
