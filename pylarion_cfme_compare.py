@@ -5,6 +5,9 @@ Compare list of tests produced by 'py.test --collect-only' with list of tests in
 and output to csv file.
 """
 
+# Licence: MPL 2.0
+# Author: Martin Kourim <mkourim@redhat.com>
+
 from __future__ import print_function, unicode_literals
 
 import sys
