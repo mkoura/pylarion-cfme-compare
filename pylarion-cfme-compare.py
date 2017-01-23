@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
 """
 Compare list of tests produced by 'py.test --collect-only' with list of tests in Polarion
 and output to csv file.
@@ -17,6 +18,7 @@ import re
 import argparse
 import csv
 
+from collections import namedtuple
 from pylarion.work_item import TestCase
 from suds import WebFault
 
@@ -146,7 +148,8 @@ class PylarionCompare(object):
                 assignee = None
             not_in_pytest.append((uid, assignee))
 
-        return (sorted(in_tree - in_polarion), not_in_pytest)
+        result = namedtuple('Result', 'not_in_polarion, not_in_pytest')
+        return result(sorted(in_tree - in_polarion), not_in_pytest)
 
 
 def main():
@@ -155,24 +158,24 @@ def main():
     cmd_parser = cmd_arguments()
     args = cmd_parser.parse_args()
 
-    polarion_project = args.polarion_project if args.polarion_project else 'RHCF3'
+    polarion_project = args.polarion_project or 'RHCF3'
 
     compare = PylarionCompare(polarion_project, args.polarion_run)
 
-    not_in_polarion, not_in_pytest = compare(args.input)
+    result = compare(args.input)
 
     with open(args.output, 'wb') as csvfile:
         cvswriter = csv.writer(csvfile, delimiter=str(';'),
                                quotechar=str('|'), quoting=csv.QUOTE_MINIMAL)
 
         cvswriter.writerow(['Tests not in Polarion'])
-        for test in not_in_polarion:
+        for test in result.not_in_polarion:
             cvswriter.writerow([test])
 
         cvswriter.writerow([])
-        cvswriter.writerow(['Tests not in pytest', 'Assignee'])
-        for test, assignee in not_in_pytest:
-            cvswriter.writerow([test, assignee if assignee else ''])
+        cvswriter.writerow(['Tests not in pytest / Unsellected by pytest', 'Assignee'])
+        for test, assignee in result.not_in_pytest:
+            cvswriter.writerow([test, assignee or ''])
 
 
 if __name__ == '__main__':
