@@ -50,7 +50,8 @@ def cmd_arguments():
                         help="Polarion Test Run name")
     parser.add_argument('-p', '--polarion-project',
                         action='store',
-                        help="Polarion project name (default taken from pylarion config file)")
+                        default='RHCF3',
+                        help="Polarion project name (default: %(default)s)")
     return parser
 
 
@@ -110,18 +111,18 @@ class PylarionCompare(object):
 
         test_records_str = 'TEST_RECORDS:("{}/{}")'.format(self.polarion_project, self.polarion_run)
 
-        query = 'NOT status:inactive AND ' \
-                'caseautomation.KEY:automated AND (({}) AND {})' \
-                .format(test_records_str, test_case_query)
+        query = 'caseautomation.KEY:automated AND (({}) AND {})'.format(
+            test_records_str, test_case_query)
         return query
 
     def polarion_collect_testcases(self):
         """Collect Polarion Test Cases."""
 
-        test_cases_list = retry_query(TestCase.query,
-                                      query=self.compile_query('cfme.tests.*'),
-                                      project_id=self.polarion_project,
-                                      fields=['title', 'work_item_id', 'test_case_id', 'assignee'])
+        test_cases_list = retry_query(
+            TestCase.query,
+            query=self.compile_query('cfme.tests.*'),
+            project_id=self.polarion_project,
+            fields=['title', 'work_item_id', 'test_case_id', 'assignee', 'status'])
         cached_testcases = {}
         for test_case in test_cases_list:
             unique_id = test_case.test_case_id
@@ -146,7 +147,8 @@ class PylarionCompare(object):
                 assignee = polarion_testcases[uid].assignee[0].name
             except IndexError:
                 assignee = None
-            not_in_pytest.append((uid, assignee))
+            if polarion_testcases[uid].status != 'inactive':
+                not_in_pytest.append((uid, assignee))
 
         result = namedtuple('Result', 'not_in_polarion, not_in_pytest')
         return result(sorted(in_tree - in_polarion), not_in_pytest)
@@ -158,9 +160,7 @@ def main():
     cmd_parser = cmd_arguments()
     args = cmd_parser.parse_args()
 
-    polarion_project = args.polarion_project or 'RHCF3'
-
-    compare = PylarionCompare(polarion_project, args.polarion_run)
+    compare = PylarionCompare(args.polarion_project, args.polarion_run)
 
     result = compare(args.input)
 

@@ -13,12 +13,12 @@ Example commands
 ----------------
 ::
 
-    $ py.test --runxfail --long-running --collect-only > /tmp/cfme_tests_list.txt
-    $ pylarion_cfme_compare.py -i /tmp/cfme_tests_list.txt -o /tmp/cfme_tests_comp.csv -r 5_7_0_17
+    $ py.test --runxfail --long-running --use-provider complete --collect-only > /tmp/cfme_tests_list.txt
+    $ pylarion-cfme-compare.py -i /tmp/cfme_tests_list.txt -o /tmp/cfme_tests_comp.csv -r 5_7_1_00
 
 See complete help::
 
-    $ pylarion_cfme_compare.py --help
+    $ pylarion-cfme-compare.py --help
 
 
 Install
