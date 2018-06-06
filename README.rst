@@ -1,5 +1,5 @@
 ================
-pylarion-compare
+Moved to https://gitlab.com/mkourim/pylarion-cfme-compare
 ================
 Compare list of tests produced by 'py.test --collect-only' with list of tests in Polarion
 and output to csv file.
